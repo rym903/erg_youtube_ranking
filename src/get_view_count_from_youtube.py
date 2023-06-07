@@ -6,6 +6,10 @@ from googleapiclient.discovery import build, Resource
 
 load_dotenv()
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+INPUT_FILE = "song_list_from_erogamescape.csv"
+INPUT_PATH = os.path.join(os.path.dirname(__file__), f"../data/{INPUT_FILE}")
+OUTPUT_FILE = "song_list_sample_with_view_count.csv"
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), f"../data/{OUTPUT_FILE}")
 
 
 # 動画の再生時間(PT3M58S)を秒に変換する
@@ -36,7 +40,7 @@ def get_video_duration_and_viewcount(video_id: str, youtube_api: Resource) -> tu
 # 各曲のYouTubeの再生回数を取得する
 def get_view_count(row: pd.Series, youtube_api: Resource) -> int:
     # 曲名とアーティスト名を取得
-    song_name = row["name"]
+    song_name = row["title"]
     artist_name = row["artist"]
     playtime = row["playtime"]
     view_count_sum = 0
@@ -66,22 +70,10 @@ def get_view_count(row: pd.Series, youtube_api: Resource) -> int:
 
 
 def join_view_count_on_youtube():
-    input_file = "song_list_sample.csv"
-    output_file = "song_list_sample_with_view_count.csv"
     youtube_api = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-
-    # input_fileへの絶対パス
-    input_path = os.path.join(os.path.dirname(__file__), f"../input_data/{input_file}")
-    song_df = pd.read_csv(input_path, header=0)
-
-    # 1行ごとに処理を行う
+    song_df = pd.read_csv(INPUT_PATH, header=0)
     song_df["view_count"] = song_df.apply(get_view_count, args=(youtube_api,), axis=1)
-
-    # output_fileへの絶対パス
-    output_path = os.path.join(
-        os.path.dirname(__file__), f"../output_data/{output_file}"
-    )
-    song_df.to_csv(output_path, index=False)
+    song_df.to_csv(OUTPUT_PATH, index=False)
 
 
 if __name__ == "__main__":
